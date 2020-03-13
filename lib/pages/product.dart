@@ -7,7 +7,8 @@ class ProductPage extends StatelessWidget {
   final String title;
   final String imageUrl;
   final String price;
-  ProductPage(this.title, this.imageUrl, this.price);
+  final String description;
+  ProductPage(this.title, this.imageUrl, this.price, this.description);
 
   _showWarningDialog(BuildContext context) {
     showDialog(
@@ -54,6 +55,8 @@ class ProductPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[TitleDefault(title), PriceTag(price)],
             ),
+            SizedBox(width: 8.0,height: 8.0,),
+            Text(description),
             SizedBox(width: 8.0,height: 8.0,),
             AddressTag('Augusta, GA'),
             Container(

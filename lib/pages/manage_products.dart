@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/pages/product_create.dart';
+import 'package:flutter_app/pages/product_edit.dart';
 import 'package:flutter_app/pages/product_list.dart';
 
 class ManageProductsPage extends StatelessWidget {
   final Function addProduct;
+  final Function updateProduct;
   final Function deleteProduct;
+  final List<Map<String, dynamic>> products;
 
-  ManageProductsPage(this.addProduct, this.deleteProduct);
+  ManageProductsPage(
+      this.addProduct, this.updateProduct, this.deleteProduct, this.products);
 
   Widget _buildSideDrawer(BuildContext context) {
     return Drawer(
@@ -51,7 +54,10 @@ class ManageProductsPage extends StatelessWidget {
         drawer: _buildSideDrawer(context),
         appBar: _buildAppBar(),
         body: TabBarView(
-          children: <Widget>[ProductCreatePage(addProduct), ProductListPage()],
+          children: <Widget>[
+            ProductEditPage(addProduct: addProduct),
+            ProductListPage(products, updateProduct)
+          ],
         ),
       ),
     );
