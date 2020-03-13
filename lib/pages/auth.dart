@@ -50,30 +50,36 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
+  void _submitForm() {
+    print(_emailValue);
+    print(_passwordValue);
+    Navigator.pushReplacementNamed(context, '/products');
+  }
+
   Widget _buildInputScrollView() {
+    final double deviceWidth = MediaQuery.of(context).size.width;
+    final double targetWidth =  deviceWidth > 550.0 ? 500.0 : deviceWidth * 0.95;
     return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          _buildEmailInput(),
-          SizedBox(
-            height: 10.9,
-          ),
-          _buildPasswordInput(),
-          _buildAcceptTermsTile(),
-          SizedBox(
-            height: 10.0,
-          ),
-          RaisedButton(
-            color: Theme.of(context).primaryColor,
-            textColor: Colors.white,
-            child: Text('LOGIN'),
-            onPressed: () {
-              print(_emailValue);
-              print(_passwordValue);
-              Navigator.pushReplacementNamed(context, '/products');
-            },
-          ),
-        ],
+      child: Container(
+        width:  targetWidth,
+        child: Column(
+          children: <Widget>[
+            _buildEmailInput(),
+            SizedBox(
+              height: 10.0,
+            ),
+            _buildPasswordInput(),
+            _buildAcceptTermsTile(),
+            SizedBox(
+              height: 10.0,
+            ),
+            RaisedButton(
+              textColor: Colors.white,
+              child: Text('LOGIN'),
+              onPressed: _submitForm,
+            ),
+          ],
+        ),
       ),
     );
   }

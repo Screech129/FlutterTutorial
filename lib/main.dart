@@ -32,12 +32,17 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(primarySwatch: Colors.green, accentColor: Colors.blue),
+      theme: ThemeData(
+          primarySwatch: Colors.green,
+          accentColor: Colors.blue,
+          brightness: Brightness.dark,
+          buttonColor: Colors.blue),
       //home: AuthPage(),
       routes: {
         '/': (BuildContext context) => AuthPage(),
         '/products': (BuildContext context) => ProductsPage(_products),
-        '/admin': (BuildContext context) => ManageProductsPage(_addProduct, _deleteProduct),
+        '/admin': (BuildContext context) =>
+            ManageProductsPage(_addProduct, _deleteProduct),
       },
       onGenerateRoute: (RouteSettings settings) {
         final List<String> pathElements = settings.name.split('/');
@@ -49,7 +54,9 @@ class _MyAppState extends State<MyApp> {
 
           return MaterialPageRoute<bool>(
             builder: (BuildContext context) => ProductPage(
-                _products[index]['title'], _products[index]['imageUrl'], _products[index]['price'].toString()),
+                _products[index]['title'],
+                _products[index]['imageUrl'],
+                _products[index]['price'].toString()),
           );
         }
         return null;
