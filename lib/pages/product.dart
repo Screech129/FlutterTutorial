@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/models/product.dart';
+import 'package:flutter_app/viewmodels/mainViewModel.dart';
 import 'package:flutter_app/widgets/products/address_tag.dart';
 import 'package:flutter_app/widgets/products/price_tag.dart';
 import 'package:flutter_app/widgets/ui_elements/title_default.dart';
+import 'package:scoped_model/scoped_model.dart';
 
 class ProductPage extends StatelessWidget {
-  final String title;
-  final String imageUrl;
-  final String price;
-  final String description;
-  ProductPage(this.title, this.imageUrl, this.price, this.description);
+  final int productIndex;
+
+  ProductPage(this.productIndex);
 
   _showWarningDialog(BuildContext context) {
     showDialog(
@@ -38,26 +39,37 @@ class ProductPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
-        print('Back Pressed');
-        Navigator.pop(context, false);
-        return Future.value(false);
-      },
-      child: Scaffold(
+    return WillPopScope(onWillPop: () {
+      print('Back Pressed');
+      Navigator.pop(context, false);
+      return Future.value(false);
+    }, child: ScopedModelDescendant<MainViewModel>(
+        builder: (BuildContext context, Widget child, MainViewModel model) {
+      final Product product = model.productsList[productIndex];
+
+      return Scaffold(
         appBar: AppBar(
-          title: Text(title),
+          title: Text(product.title),
         ),
         body: Center(
-          child: Column(children: <Widget>[            
-            Image.asset(imageUrl),
+          child: Column(children: <Widget>[
+            Image.asset(product.image),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[TitleDefault(title), PriceTag(price)],
+              children: <Widget>[
+                TitleDefault(product.title),
+                PriceTag(product.price.toString())
+              ],
             ),
-            SizedBox(width: 8.0,height: 8.0,),
-            Text(description),
-            SizedBox(width: 8.0,height: 8.0,),
+            SizedBox(
+              width: 8.0,
+              height: 8.0,
+            ),
+            Text(product.description),
+            SizedBox(
+              width: 8.0,
+              height: 8.0,
+            ),
             AddressTag('Augusta, GA'),
             Container(
               padding: EdgeInsets.all(10.0),
@@ -69,7 +81,7 @@ class ProductPage extends StatelessWidget {
             ),
           ]),
         ),
-      ),
-    );
+      );
+    }));
   }
 }

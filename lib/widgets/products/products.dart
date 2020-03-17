@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/models/product.dart';
+import 'package:flutter_app/viewmodels/mainViewModel.dart';
 import 'package:flutter_app/widgets/products/product_card.dart';
+import 'package:scoped_model/scoped_model.dart';
 
 class Products extends StatelessWidget {
-  final List<Map<String, dynamic>> products;
-  Products(this.products);
-
-  Widget _buildProductList() {
+  Widget _buildProductList(List<Product> products) {
     Widget productCard = Center(
       child: Text('No Products Found. Please add some.'),
     );
@@ -22,6 +22,10 @@ class Products extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _buildProductList();
+    return ScopedModelDescendant<MainViewModel>(
+      builder: (BuildContext context, Widget child, MainViewModel model) {
+        return _buildProductList(model.displayedProducts);
+      },
+    );
   }
 }

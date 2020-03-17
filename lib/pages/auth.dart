@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/viewmodels/mainViewModel.dart';
+import 'package:scoped_model/scoped_model.dart';
 
 class AuthPage extends StatefulWidget {
   @override
@@ -8,7 +10,6 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
-
   final Map<String, dynamic> _formData = {
     'email': null,
     'password': null,
@@ -21,7 +22,6 @@ class _AuthPageState extends State<AuthPage> {
     return TextFormField(
       decoration: InputDecoration(
           labelText: 'E-Mail', filled: true, fillColor: Colors.black54),
-          
       keyboardType: TextInputType.emailAddress,
       validator: (String value) {
         if (value.isEmpty) {
@@ -54,7 +54,8 @@ class _AuthPageState extends State<AuthPage> {
 
   Widget _buildAcceptTermsTile() {
     return SwitchListTile(
-      value:  _formData['acceptTerms'] == null ? false : _formData['acceptTerms'],
+      value:
+          _formData['acceptTerms'] == null ? false : _formData['acceptTerms'],
       onChanged: (bool value) {
         _formData['acceptTerms'] = value;
       },
@@ -62,11 +63,12 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  void _submitForm() {
+  void _submitForm(Function login) {
     if (!_formKey.currentState.validate()) {
       return;
     }
     _formKey.currentState.save();
+    login(_formData['email'], _formData['password']);
     Navigator.pushReplacementNamed(context, '/products');
   }
 
@@ -89,11 +91,14 @@ class _AuthPageState extends State<AuthPage> {
               SizedBox(
                 height: 10.0,
               ),
-              RaisedButton(
-                textColor: Colors.white,
-                child: Text('LOGIN'),
-                onPressed: _submitForm,
-              ),
+              ScopedModelDescendant<MainViewModel>(builder:
+                  (BuildContext context, Widget child, MainViewModel model) {
+                return RaisedButton(
+                  textColor: Colors.white,
+                  child: Text('LOGIN'),
+                  onPressed: () => _submitForm(model.login),
+                );
+              })
             ],
           ),
         ),
