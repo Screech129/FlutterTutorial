@@ -12,31 +12,29 @@ class ProductCard extends StatelessWidget {
   ProductCard(this.product, this.productIndex);
 
   Widget _buildButtonBar(BuildContext context) {
-    return ButtonBar(
-      alignment: MainAxisAlignment.center,
-      children: <Widget>[
-        IconButton(
-          icon: Icon(Icons.info),
-          color: Theme.of(context).primaryColor,
-          onPressed: () => Navigator.pushNamed<bool>(
-              context, '/product/' + productIndex.toString()),
-        ),
-        ScopedModelDescendant<MainViewModel>(
-          builder:
-              (BuildContext context, Widget child, MainViewModel model) {
-            return IconButton(
-              icon: Icon(model.productsList[productIndex].isFavorite
-                  ? Icons.favorite
-                  : Icons.favorite_border),
-              color: Colors.red,
-              onPressed: () {
-                model.selectProduct(productIndex);
-                model.toggleIsFavorite();
-              },
-            );
-          },
-        )
-      ],
+    return ScopedModelDescendant<MainViewModel>(
+      builder: (BuildContext context, Widget child, MainViewModel model) {
+        return ButtonBar(
+            alignment: MainAxisAlignment.center,
+            children: <Widget>[
+              IconButton(
+                icon: Icon(Icons.info),
+                color: Theme.of(context).primaryColor,
+                onPressed: () => Navigator.pushNamed<bool>(
+                    context, '/product/' + model.productsList[productIndex].id),
+              ),
+              IconButton(
+                icon: Icon(model.productsList[productIndex].isFavorite
+                    ? Icons.favorite
+                    : Icons.favorite_border),
+                color: Colors.red,
+                onPressed: () {
+                  model.selectProduct(model.productsList[productIndex].id);
+                  model.toggleIsFavorite();
+                },
+              ),
+            ]);
+      },
     );
   }
 
@@ -45,7 +43,12 @@ class ProductCard extends StatelessWidget {
     return Card(
       child: Column(
         children: <Widget>[
-          Image.asset(product.image),
+          FadeInImage(
+            placeholder: AssetImage('assets/food.jpg'),
+            image: NetworkImage(product.image),
+            height: 300,
+            fit: BoxFit.cover,
+          ),
           Container(
               padding: EdgeInsets.only(top: 10.0),
               child: Row(

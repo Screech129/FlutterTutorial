@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/models/product.dart';
-import 'package:flutter_app/viewmodels/mainViewModel.dart';
 import 'package:flutter_app/widgets/products/address_tag.dart';
 import 'package:flutter_app/widgets/products/price_tag.dart';
 import 'package:flutter_app/widgets/ui_elements/title_default.dart';
-import 'package:scoped_model/scoped_model.dart';
 
 class ProductPage extends StatelessWidget {
-  final int productIndex;
+  final Product product;
 
-  ProductPage(this.productIndex);
+  ProductPage(this.product);
 
   _showWarningDialog(BuildContext context) {
     showDialog(
@@ -39,21 +37,24 @@ class ProductPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(onWillPop: () {
-      print('Back Pressed');
-      Navigator.pop(context, false);
-      return Future.value(false);
-    }, child: ScopedModelDescendant<MainViewModel>(
-        builder: (BuildContext context, Widget child, MainViewModel model) {
-      final Product product = model.productsList[productIndex];
-
-      return Scaffold(
+    return WillPopScope(
+      onWillPop: () {
+        print('Back Pressed');
+        Navigator.pop(context, false);
+        return Future.value(false);
+      },
+      child: Scaffold(
         appBar: AppBar(
           title: Text(product.title),
         ),
         body: Center(
           child: Column(children: <Widget>[
-            Image.asset(product.image),
+            FadeInImage(
+              placeholder: AssetImage('assets/food.jpg'),
+              image: NetworkImage(product.image),
+              height: 300,
+              fit: BoxFit.cover,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
@@ -81,7 +82,7 @@ class ProductPage extends StatelessWidget {
             ),
           ]),
         ),
-      );
-    }));
+      ),
+    );
   }
 }

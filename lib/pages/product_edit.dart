@@ -80,34 +80,59 @@ class _ProductEditPageState extends State<ProductEditPage> {
       return;
     }
     _formKey.currentState.save();
-    if (selectedProductIndex == null) {
+    if (selectedProductIndex == -1) {
       addProduct(
         _formData['title'],
         _formData['description'],
         _formData['imageUrl'],
         _formData['price'],
-      );
+      ).then((bool success) {
+        if (success) {
+          Navigator.pushReplacementNamed(context, '/products')
+              .then((_) => setSelectedProduct(null));
+        } else {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Something went wrong!'),
+                content: Text('Please try the request again.'),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('Okay'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  )
+                ],
+              );
+            },
+          );
+        }
+      });
     } else {
       updateProduct(
         _formData['title'],
         _formData['description'],
         _formData['imageUrl'],
         _formData['price'],
-      );
+      ).then((_) => Navigator.pushReplacementNamed(context, '/products')
+          .then((_) => setSelectedProduct(null)));
     }
-    Navigator.pushReplacementNamed(context, '/products')
-        .then((_) => setSelectedProduct(null));
   }
 
   Widget _buldSubmitButton() {
     return ScopedModelDescendant<MainViewModel>(
       builder: (BuildContext context, Widget child, MainViewModel model) {
-        return RaisedButton(
-          child: Text('Save'),
-          textColor: Colors.white,
-          onPressed: () => _submitForm(model.addProduct, model.updateProduct,
-              model.selectProduct, model.selectedProductIndex),
-        );
+        return model.isLoading
+            ? Center(child: CircularProgressIndicator())
+            : RaisedButton(
+                child: Text('Save'),
+                textColor: Colors.white,
+                onPressed: () => _submitForm(
+                    model.addProduct,
+                    model.updateProduct,
+                    model.selectProduct,
+                    model.selectedProductIndex),
+              );
       },
     );
   }
@@ -155,7 +180,7 @@ class _ProductEditPageState extends State<ProductEditPage> {
     return ScopedModelDescendant<MainViewModel>(
         builder: (BuildContext context, Widget child, MainViewModel model) {
       var pageContent = _buildPageContent(context, model.selectedProduct);
-      return model.selProductIndex == null
+      return model.selectedProductIndex == -1
           ? pageContent
           : Scaffold(
               appBar: AppBar(title: Text('Edit Product')),
