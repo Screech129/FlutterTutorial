@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/models/product.dart';
 import 'package:flutter_app/viewmodels/mainViewModel.dart';
+import 'package:flutter_app/widgets/form_inputs/location_inputFlutterMap.dart';
 import 'package:flutter_app/widgets/products/address_tag.dart';
 import 'package:flutter_app/widgets/products/price_tag.dart';
 import 'package:flutter_app/widgets/ui_elements/title_default.dart';
@@ -62,7 +63,11 @@ class ProductCard extends StatelessWidget {
                 ],
               )),
           AddressTag('Augusta, GA'),
-          //LocationInput(),
+          Container(
+            alignment: Alignment.center,
+            height: 200,
+            child: LocationInputFlutterMap(),
+          ),
           Text(product.userEmail),
           _buildButtonBar(context)
         ],
