@@ -1,6 +1,7 @@
 //Video 8_9 is current tutorial
 import 'package:flutter/material.dart';
 import 'package:flutter_app/viewmodels/mainViewModel.dart';
+import 'package:flutter_app/widgets/ui_elements/logutListTile.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 import '../widgets/products/products.dart';
@@ -32,11 +33,14 @@ class _ProductsPageState extends State<ProductsPage> {
             title: Text('Navigation'),
           ),
           ListTile(
-              leading: Icon(Icons.edit),
-              title: Text('Manage Products'),
-              onTap: () {
-                Navigator.pushReplacementNamed(context, '/admin');
-              })
+            leading: Icon(Icons.edit),
+            title: Text('Manage Products'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/admin');
+            },
+          ),
+          Divider(),
+          LogoutListTile(),
         ],
       ),
     );
@@ -51,10 +55,7 @@ class _ProductsPageState extends State<ProductsPage> {
         } else if (model.isLoading) {
           content = Center(child: CircularProgressIndicator());
         }
-        return RefreshIndicator(
-          child: content,
-          onRefresh: model.fetchProducts
-        );
+        return RefreshIndicator(child: content, onRefresh: model.fetchProducts);
       },
     );
   }

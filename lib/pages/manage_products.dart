@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/product_edit.dart';
 import 'package:flutter_app/pages/product_list.dart';
 import 'package:flutter_app/viewmodels/mainViewModel.dart';
+import 'package:flutter_app/widgets/ui_elements/logutListTile.dart';
 
 class ManageProductsPage extends StatelessWidget {
   final MainViewModel model;
@@ -19,9 +20,11 @@ class ManageProductsPage extends StatelessWidget {
             leading: Icon(Icons.shop),
             title: Text('Products List'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, '/products');
+              Navigator.pushReplacementNamed(context, '/');
             },
-          )
+          ),
+          Divider(),
+          LogoutListTile(),
         ],
       ),
     );

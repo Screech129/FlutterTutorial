@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_app/models/auth.dart';
 import 'package:flutter_app/models/product.dart';
 import 'package:flutter_app/models/user.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserProductsViewModel extends Model {
   List<Product> _products = [];
@@ -14,6 +17,16 @@ class UserProductsViewModel extends Model {
 }
 
 class UserViewModel extends UserProductsViewModel {
+  Timer _authTimer;
+  PublishSubject<bool> _userSubject = PublishSubject();
+  User get user {
+    return _authenticatedUser;
+  }
+
+  PublishSubject<bool> get userSubject {
+    return _userSubject;
+  }
+
   Future<Map<String, dynamic>> authenticate(String email, String password,
       [AuthMode authmode = AuthMode.Login]) async {
     final Map<String, dynamic> authData = {
@@ -35,10 +48,27 @@ class UserViewModel extends UserProductsViewModel {
           );
     bool hasError = true;
     final Map<String, dynamic> responseData = json.decode(response.body);
+    final DateTime currDT = DateTime.now();
+    final DateTime expireTime =
+        currDT.add(Duration(seconds: int.parse(responseData['expiresIn'])));
     var message = 'Something Went Wrong.';
     if (responseData.containsKey('idToken')) {
       hasError = false;
-      message = 'Sign up successful';
+      message = 'Success';
+      final SharedPreferences sharedPrefs =
+          await SharedPreferences.getInstance();
+      sharedPrefs.setString('token', responseData['idToken']);
+      sharedPrefs.setString('email', email);
+      sharedPrefs.setString('userId', responseData['localId']);
+      sharedPrefs.setString('expirationTime', expireTime.toIso8601String());
+
+      setAuthTimeout(int.parse(responseData['expiresIn']));
+      _userSubject.add(true);
+
+      _authenticatedUser = User(
+          email: email,
+          id: responseData['localId'],
+          token: responseData['idToken']);
     } else if (responseData['error']['message'] == 'EMAIL_NOT_FOUND' ||
         responseData['error']['message'] == 'INVALID_PASSWORD') {
       message = 'Login Failed';
@@ -48,6 +78,49 @@ class UserViewModel extends UserProductsViewModel {
     _isLoading = false;
     notifyListeners();
     return {'success': !hasError, 'message': message};
+  }
+
+  void autoAuthenticate() async {
+    final SharedPreferences sharedPreferences =
+        await SharedPreferences.getInstance();
+    final String token = sharedPreferences.getString('token');
+    final String exprireTime = sharedPreferences.getString('expirationTime');
+    if (token != null) {
+      final DateTime currDT = DateTime.now();
+      final DateTime parseExpirationTime = DateTime.parse(exprireTime);
+      if (parseExpirationTime.isBefore(currDT)) {
+        _authenticatedUser = null;
+        notifyListeners();
+        return;
+      }
+
+      final String email = sharedPreferences.getString('email');
+      final String id = sharedPreferences.getString('userId');
+      final int tokenLifeSpan =
+          parseExpirationTime.difference(currDT).inSeconds;
+
+      _authenticatedUser = User(email: email, id: id, token: token);
+      _userSubject.add(true);
+      setAuthTimeout(tokenLifeSpan);
+
+      notifyListeners();
+    }
+  }
+
+  void logOut() async {
+    _authenticatedUser = null;
+    _authTimer.cancel();
+    _userSubject.add(false);
+
+    final SharedPreferences sharedPreferences =
+        await SharedPreferences.getInstance();
+    sharedPreferences.remove('token');
+    sharedPreferences.remove('email');
+    sharedPreferences.remove('userId');
+  }
+
+  void setAuthTimeout(int time) {
+    _authTimer = Timer(Duration(seconds: time), logOut);
   }
 }
 
@@ -102,7 +175,7 @@ class ProductsViewModel extends UserProductsViewModel {
     };
     try {
       final http.Response response = await http.post(
-          "https://fluttertutorialds.firebaseio.com/products.json",
+          "https://fluttertutorialds.firebaseio.com/products.json?auth=${_authenticatedUser.token}",
           body: json.encode(productData));
 
       if (response.statusCode != 200 && response.statusCode != 201) {
@@ -138,7 +211,7 @@ class ProductsViewModel extends UserProductsViewModel {
     notifyListeners();
     return http
         .delete(
-            "https://fluttertutorialds.firebaseio.com/products/${deletedProductId}.json")
+            "https://fluttertutorialds.firebaseio.com/products/${deletedProductId}.json?auth=${_authenticatedUser.token}")
         .then((http.Response response) {
       _isLoading = false;
       notifyListeners();
@@ -166,7 +239,7 @@ class ProductsViewModel extends UserProductsViewModel {
     };
     return http
         .put(
-            "https://fluttertutorialds.firebaseio.com/products/${selectedProduct.id}.json",
+            "https://fluttertutorialds.firebaseio.com/products/${selectedProduct.id}.json?auth=${_authenticatedUser.token}",
             body: json.encode(updateData))
         .then((http.Response response) {
       _isLoading = false;
@@ -193,10 +266,22 @@ class ProductsViewModel extends UserProductsViewModel {
     _selProductId = productId;
   }
 
-  void toggleIsFavorite() {
+  void toggleIsFavorite() async {
     final bool isCurrentlyFavorited =
         _products[selectedProductIndex].isFavorite;
     final bool newFavoriteStatus = !isCurrentlyFavorited;
+    if (newFavoriteStatus) {
+      final http.Response response = await http.put(
+          'https://fluttertutorialds.firebaseio.com/products/${selectedProduct.id}/wishListUsers/${_authenticatedUser.id}.json?auth=${_authenticatedUser.token}',
+          body: jsonEncode(true));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        _isLoading = false;
+        notifyListeners();
+      }
+    } else {
+      await http.delete(
+          'https://fluttertutorialds.firebaseio.com/products/${selectedProduct.id}/wishListUsers/${_authenticatedUser.id}.json?auth=${_authenticatedUser.token}');
+    }
     final Product updatedProduct = Product(
         id: selectedProduct.id,
         title: selectedProduct.title,
@@ -216,11 +301,13 @@ class ProductsViewModel extends UserProductsViewModel {
     notifyListeners();
   }
 
-  Future<Null> fetchProducts() {
+  Future<Null> fetchProducts({onlyForUser = false}) {
     _isLoading = true;
     notifyListeners();
+    print(_authenticatedUser.token);
     return http
-        .get("https://fluttertutorialds.firebaseio.com/products.json")
+        .get(
+            "https://fluttertutorialds.firebaseio.com/products.json?auth=${_authenticatedUser.token}")
         .then<Null>((http.Response response) {
       final List<Product> productList = [];
       final Map<String, dynamic> productListData = json.decode(response.body);
@@ -237,16 +324,25 @@ class ProductsViewModel extends UserProductsViewModel {
             price: productData['price'],
             image: productData['image'],
             userEmail: productData['userEmail'],
-            userId: productData['userId']);
+            userId: productData['userId'],
+            isFavorite: productData['wishListUsers'] == null
+                ? false
+                : (productData['wishListUsers'] as Map<String, dynamic>)
+                    .containsKey(_authenticatedUser.id));
         productList.add(product);
       });
-      _products = productList;
+      _products = onlyForUser
+          ? productList.where((Product product) {
+              return product.userId == _authenticatedUser.id;
+            }).toList()
+          : productList;
       _isLoading = false;
       notifyListeners();
       _selProductId = null;
     }).catchError((error) {
       _isLoading = false;
       notifyListeners();
+      print(error);
       return;
     });
   }

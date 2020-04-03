@@ -62,6 +62,7 @@ class ProductCard extends StatelessWidget {
                 ],
               )),
           AddressTag('Augusta, GA'),
+          //LocationInput(),
           Text(product.userEmail),
           _buildButtonBar(context)
         ],
