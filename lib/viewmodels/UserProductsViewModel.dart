@@ -45,11 +45,11 @@ class UserViewModel extends UserProductsViewModel {
     notifyListeners();
     authmode == AuthMode.Login
         ? response = await http.post(
-            'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyDnAdTHdPfyjXBldc0UKf7fGrPPWS2Zt3M',
+            'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}',
             body: json.encode(authData),
           )
         : response = await http.post(
-            'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyDnAdTHdPfyjXBldc0UKf7fGrPPWS2Zt3M',
+            'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}',
             body: json.encode(authData),
           );
     bool hasError = true;
@@ -172,10 +172,10 @@ class ProductsViewModel extends UserProductsViewModel {
       name: 'storeImage',
       options: FirebaseOptions(
         googleAppID: (Platform.isIOS || Platform.isMacOS)
-            ? '1:680592336660:ios:ba47362c7de5475e1bc401'
-            : '1:680592336660:android:91a1bfaa9f9470b01bc401',
+            ? {}
+            : {},
         gcmSenderID: '680592336660',
-        apiKey: ' AIzaSyDnAdTHdPfyjXBldc0UKf7fGrPPWS2Zt3M ',
+        apiKey: apiKey,
         projectID: 'fluttertutorialds',
       ),
     );
