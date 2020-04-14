@@ -1,13 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:path/path.dart' as path;
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_app/models/auth.dart';
+import 'package:flutter_app/models/locationData.dart';
 import 'package:flutter_app/models/product.dart';
 import 'package:flutter_app/models/user.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:uuid/uuid.dart';
 
 class UserProductsViewModel extends Model {
   List<Product> _products = [];
@@ -160,18 +166,65 @@ class ProductsViewModel extends UserProductsViewModel {
     });
   }
 
-  Future<bool> addProduct(
-      String title, String description, String image, double price) async {
+  Future<Map<String, String>> uploadImage(File image,
+      {String imagePath}) async {
+    final FirebaseApp app = await FirebaseApp.configure(
+      name: 'storeImage',
+      options: FirebaseOptions(
+        googleAppID: (Platform.isIOS || Platform.isMacOS)
+            ? '1:680592336660:ios:ba47362c7de5475e1bc401'
+            : '1:680592336660:android:91a1bfaa9f9470b01bc401',
+        gcmSenderID: '680592336660',
+        apiKey: ' AIzaSyDnAdTHdPfyjXBldc0UKf7fGrPPWS2Zt3M ',
+        projectID: 'fluttertutorialds',
+      ),
+    );
+    final FirebaseStorage storage = FirebaseStorage(
+        app: app, storageBucket: 'gs://fluttertutorialds.appspot.com');
+
+    var ref = storage.ref();
+    String uuid = Uuid().v1();
+    var uploadTask = ref
+        .child('images')
+        .child(path.basename(image.path) + uuid)
+        .putFile(image);
+
+    try {
+      var storageSnapshot = await uploadTask.onComplete;
+      String downloadUrl = await storageSnapshot.ref.getDownloadURL();
+      Map<String, String> uploadData = {
+        'imagePath': imagePath,
+        'imageUrl': downloadUrl
+      };
+      return uploadData;
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
+
+  Future<bool> addProduct(String title, String description, File image,
+      double price, LocationData locationData) async {
     _isLoading = true;
     notifyListeners();
+
+    final uploadData = await uploadImage(image);
+    if (uploadData == null) {
+      print('Upload failed');
+      return false;
+    }
+
     final Map<String, dynamic> productData = {
       'title': title,
       'description': description,
-      'image':
-          'https://www.airfrov.com/blog/wp-content/uploads/2016/05/snacks.jpg',
       'price': price,
       'userEmail': _authenticatedUser.email,
-      'userId': _authenticatedUser.id
+      'userId': _authenticatedUser.id,
+      'imagePath': uploadData['imagePath'],
+      'imageUrl': uploadData['imageUrl'],
+      'loc_lat': locationData.latitude,
+      'loc_lon': locationData.longitude,
+      'loc_address': locationData.address,
     };
     try {
       final http.Response response = await http.post(
@@ -188,10 +241,12 @@ class ProductsViewModel extends UserProductsViewModel {
           id: responseData['name'],
           title: title,
           description: description,
-          image: image,
+          image: uploadData['imageUrl'],
+          imagePath: uploadData['imagePath'],
           price: price,
           userEmail: _authenticatedUser.email,
-          userId: _authenticatedUser.id);
+          userId: _authenticatedUser.id,
+          location: locationData);
       _products.add(newProduct);
       _isLoading = false;
       notifyListeners();
@@ -223,47 +278,66 @@ class ProductsViewModel extends UserProductsViewModel {
     });
   }
 
-  Future<bool> updateProduct(
-      String title, String description, String image, double price) {
+  Future<bool> updateProduct(String title, String description, File image,
+      double price, LocationData locationData) async {
     _isLoading = true;
     notifyListeners();
+    String imageUrl = selectedProduct.image;
+    String imagePath = selectedProduct.imagePath;
+    if (image != null) {
+      final uploadData = await uploadImage(image);
+      if (uploadData == null) {
+        print('Upload failed');
+        return false;
+      }
 
+      imageUrl = uploadData['imageUrl'];
+      imagePath = uploadData['imagePath'];
+    }
     final Map<String, dynamic> updateData = {
       'title': title,
       'description': description,
-      'image':
-          'https://www.airfrov.com/blog/wp-content/uploads/2016/05/snacks.jpg',
       'price': price,
+      'imageUrl': imageUrl,
+      'imagePath': imagePath,
       'userEmail': selectedProduct.userEmail,
-      'userId': selectedProduct.userId
+      'userId': selectedProduct.userId,
+      'loc_lat': locationData.latitude,
+      'loc_lon': locationData.longitude,
+      'loc_address': locationData.address,
     };
-    return http
-        .put(
-            "https://fluttertutorialds.firebaseio.com/products/${selectedProduct.id}.json?auth=${_authenticatedUser.token}",
-            body: json.encode(updateData))
-        .then((http.Response response) {
+    try {
+      final http.Response response = await http.put(
+          "https://fluttertutorialds.firebaseio.com/products/${selectedProduct.id}.json?auth=${_authenticatedUser.token}",
+          body: json.encode(updateData));
       _isLoading = false;
       final Product updatedProduct = Product(
           id: selectedProduct.id,
           title: title,
           description: description,
-          image: image,
+          image: imageUrl,
+          imagePath: imagePath,
           price: price,
           userEmail: selectedProduct.userEmail,
-          userId: selectedProduct.userId);
+          userId: selectedProduct.userId,
+          location: locationData);
 
       _products[selectedProductIndex] = updatedProduct;
       notifyListeners();
       return true;
-    }).catchError((error) {
+    } catch (e) {
       _isLoading = false;
       notifyListeners();
       return false;
-    });
+    }
   }
 
   void selectProduct(String productId) {
     _selProductId = productId;
+    if (productId == null) {
+      return;
+    }
+    notifyListeners();
   }
 
   void toggleIsFavorite() async {
@@ -287,10 +361,12 @@ class ProductsViewModel extends UserProductsViewModel {
         title: selectedProduct.title,
         description: selectedProduct.description,
         image: selectedProduct.image,
+        imagePath: selectedProduct.imagePath,
         price: selectedProduct.price,
         isFavorite: newFavoriteStatus,
         userEmail: selectedProduct.userEmail,
-        userId: selectedProduct.userId);
+        userId: selectedProduct.userId,
+        location: selectedProduct.location);
 
     _products[selectedProductIndex] = updatedProduct;
     notifyListeners();
@@ -322,9 +398,14 @@ class ProductsViewModel extends UserProductsViewModel {
             title: productData['title'],
             description: productData['description'],
             price: productData['price'],
-            image: productData['image'],
+            image: productData['imageUrl'],
+            imagePath: productData['imagePath'],
             userEmail: productData['userEmail'],
             userId: productData['userId'],
+            location: LocationData(
+                address: productData['loc_address'],
+                latitude: productData['loc_lat'],
+                longitude: productData['loc_lon']),
             isFavorite: productData['wishListUsers'] == null
                 ? false
                 : (productData['wishListUsers'] as Map<String, dynamic>)

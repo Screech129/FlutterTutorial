@@ -1,4 +1,4 @@
-//CURRENT VIDEO 14_5
+//CURRENT VIDEO 14_12
 import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/manage_products.dart';
 import 'package:flutter_app/pages/product.dart';
@@ -40,6 +40,7 @@ class _MyAppState extends State<MyApp> {
       child: MaterialApp(
         theme: ThemeData(
             primarySwatch: Colors.green,
+            primaryColor: Colors.green,
             accentColor: Colors.blue,
             brightness: Brightness.dark,
             buttonColor: Colors.blue),

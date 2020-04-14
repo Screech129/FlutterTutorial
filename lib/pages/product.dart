@@ -9,6 +9,10 @@ class ProductPage extends StatelessWidget {
 
   ProductPage(this.product);
 
+  _openMap(){
+    
+  }
+
   _showWarningDialog(BuildContext context) {
     showDialog(
         context: context,
@@ -71,7 +75,10 @@ class ProductPage extends StatelessWidget {
               width: 8.0,
               height: 8.0,
             ),
-            AddressTag('Augusta, GA'),
+            GestureDetector(
+              child: AddressTag(product.location.address),
+              onTap: _openMap,
+            ),
             Container(
               padding: EdgeInsets.all(10.0),
               child: RaisedButton(

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/models/locationData.dart';
 import 'package:flutter_app/models/product.dart';
 import 'package:flutter_app/viewmodels/mainViewModel.dart';
+import 'package:flutter_app/widgets/form_inputs/image.dart';
+import 'package:flutter_app/widgets/form_inputs/location_inputFlutterMap.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'dart:io';
 
 class ProductEditPage extends StatefulWidget {
   @override
@@ -15,7 +19,8 @@ class _ProductEditPageState extends State<ProductEditPage> {
     'title': null,
     'description': null,
     'price': null,
-    'imageUrl': 'assets/food.jpg'
+    'imageUrl': null,
+    'location': null
   };
 
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
@@ -76,17 +81,15 @@ class _ProductEditPageState extends State<ProductEditPage> {
   void _submitForm(
       Function addProduct, Function updateProduct, Function setSelectedProduct,
       [int selectedProductIndex]) {
-    if (!_formKey.currentState.validate()) {
+    if (!_formKey.currentState.validate() ||
+        (_formData['imageUrl'] == null && selectedProductIndex == -1)) {
       return;
     }
     _formKey.currentState.save();
     if (selectedProductIndex == -1) {
-      addProduct(
-        _formData['title'],
-        _formData['description'],
-        _formData['imageUrl'],
-        _formData['price'],
-      ).then((bool success) {
+      addProduct(_formData['title'], _formData['description'],
+              _formData['imageUrl'], _formData['price'], _formData['location'])
+          .then((bool success) {
         if (success) {
           Navigator.pushReplacementNamed(context, '/products')
               .then((_) => setSelectedProduct(null));
@@ -114,9 +117,18 @@ class _ProductEditPageState extends State<ProductEditPage> {
         _formData['description'],
         _formData['imageUrl'],
         _formData['price'],
+        _formData['location'],
       ).then((_) => Navigator.pushReplacementNamed(context, '/products')
           .then((_) => setSelectedProduct(null)));
     }
+  }
+
+  void _setLocation(LocationData locationData) {
+    _formData['location'] = locationData;
+  }
+
+  void _setImage(File image) {
+    _formData['imageUrl'] = image;
   }
 
   Widget _buldSubmitButton() {
@@ -150,29 +162,37 @@ class _ProductEditPageState extends State<ProductEditPage> {
         margin: EdgeInsets.all(10.0),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: targetPadding / 2),
-            children: <Widget>[
-              _buildTitleTextFiled(selectedProduct),
-              _buildDescriptionTextField(selectedProduct),
-              _buildPriceTextField(selectedProduct),
-              SizedBox(
-                height: 10.0,
-              ),
-              
-              SizedBox(
-                height: 10.0,
-              ),
-              // GestureDetector(
-              //   child: Container(
-              //     color: Colors.green,
-              //     padding: EdgeInsets.all(5.0),
-              //     child: Text("button"),
-              //   ),
-              //   onTap: _submitForm,
-              // )
-              _buldSubmitButton()
-            ],
+            child: Column(
+              children: <Widget>[
+                _buildTitleTextFiled(selectedProduct),
+                _buildDescriptionTextField(selectedProduct),
+                _buildPriceTextField(selectedProduct),
+                SizedBox(
+                  height: 10.0,
+                ),
+
+                SizedBox(
+                  height: 10.0,
+                ),
+
+                LocationInputFlutterMap(_setLocation, selectedProduct),
+                SizedBox(
+                  height: 10.0,
+                ),
+                ImageInput(_setImage, selectedProduct),
+                // GestureDetector(
+                //   child: Container(
+                //     color: Colors.green,
+                //     padding: EdgeInsets.all(5.0),
+                //     child: Text("button"),
+                //   ),
+                //   onTap: _submitForm,
+                // )
+                _buldSubmitButton()
+              ],
+            ),
           ),
         ),
       ),
