@@ -12,7 +12,7 @@ import 'package:location/location.dart' as geoLoc;
 class LocationInputFlutterMap extends StatefulWidget {
   final Function setLocation;
   final Product selectedProduct;
-  final String apiKey = 'AIzaSyCbkcYHXPOsUsOWhF1186rmg6dI7q71jjo';
+  final String apiKey = '';
   LocationInputFlutterMap(this.setLocation, this.selectedProduct);
 
   @override
