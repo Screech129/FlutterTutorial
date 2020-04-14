@@ -307,7 +307,7 @@ class ProductsViewModel extends UserProductsViewModel {
       'loc_address': locationData.address,
     };
     try {
-      final http.Response response = await http.put(
+      await http.put(
           "https://fluttertutorialds.firebaseio.com/products/${selectedProduct.id}.json?auth=${_authenticatedUser.token}",
           body: json.encode(updateData));
       _isLoading = false;
