@@ -47,11 +47,19 @@ class UserViewModel extends UserProductsViewModel {
     notifyListeners();
     authmode == AuthMode.Login
         ? response = await http.post(
+<<<<<<< HEAD
             'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${googleApiKey}',
             body: json.encode(authData),
           )
         : response = await http.post(
             'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${googleApiKey}',
+=======
+            'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}',
+            body: json.encode(authData),
+          )
+        : response = await http.post(
+            'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}',
+>>>>>>> 5f263e152b56377475eea8180681d00a3858c1a7
             body: json.encode(authData),
           );
     bool hasError = true;
