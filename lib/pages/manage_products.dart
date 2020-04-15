@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/product_edit.dart';
 import 'package:flutter_app/pages/product_list.dart';
@@ -33,6 +35,7 @@ class ManageProductsPage extends StatelessWidget {
   Widget _buildAppBar() {
     return AppBar(
       title: Text('Manage Products'),
+      elevation: Platform.isIOS ? 0 : 4,
       bottom: TabBar(
         tabs: <Widget>[
           Tab(

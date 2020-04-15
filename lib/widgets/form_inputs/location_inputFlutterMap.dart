@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/models/locationData.dart';
 import 'package:flutter_app/models/product.dart';
+import 'package:flutter_app/shared/global_config.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
 import 'package:http/http.dart' as http;
@@ -12,7 +13,7 @@ import 'package:location/location.dart' as geoLoc;
 class LocationInputFlutterMap extends StatefulWidget {
   final Function setLocation;
   final Product selectedProduct;
-  final String apiKey = 'AIzaSyCbkcYHXPOsUsOWhF1186rmg6dI7q71jjo';
+  
   LocationInputFlutterMap(this.setLocation, this.selectedProduct);
 
   @override
@@ -51,7 +52,7 @@ class _LocationInputFlutterMapState extends State<LocationInputFlutterMap> {
     if (!_addressInputFocusNode.hasFocus) {
       if (geocode) {
         final uri = Uri.https('maps.googleapis.com', '/maps/api/geocode/json',
-            {'address': address, 'key': widget.apiKey});
+            {'address': address, 'key':googleApiKey});
         await http.get(uri).then((http.Response response) {
           final decodedResponse = jsonDecode(response.body);
           final formattedAddress =
@@ -98,7 +99,7 @@ class _LocationInputFlutterMapState extends State<LocationInputFlutterMap> {
   Future<String> _getAddress(double lat, double lon) async {
     final uri = Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
       'latlng': '${lat.toString()},${lon.toString()}',
-      'key': widget.apiKey
+      'key': googleApiKey
     });
     var response = await http.get(uri);
     final decodedResponse = jsonDecode(response.body);
@@ -129,7 +130,7 @@ class _LocationInputFlutterMapState extends State<LocationInputFlutterMap> {
           urlTemplate:
               "https://atlas.microsoft.com/map/tile/png?api-version=1&layer=basic&style=main&tileSize=256&view=Auto&zoom={z}&x={x}&y={y}&subscription-key={subscriptionKey}",
           additionalOptions: {
-            'subscriptionKey': 'rQikpCb60_bjCqxHtcTbbyUK5sTkM86SGNKn-DUaBMw'
+            'subscriptionKey': azureApiKey
           },
         ),
         MarkerLayerOptions(

@@ -8,8 +8,7 @@ import 'package:scoped_model/scoped_model.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
-  final int productIndex;
-  ProductCard(this.product, this.productIndex);
+  ProductCard(this.product);
 
   Widget _buildButtonBar(BuildContext context) {
     return ScopedModelDescendant<MainViewModel>(
@@ -20,16 +19,20 @@ class ProductCard extends StatelessWidget {
               IconButton(
                 icon: Icon(Icons.info),
                 color: Theme.of(context).primaryColor,
-                onPressed: () => Navigator.pushNamed<bool>(
-                    context, '/product/' + model.productsList[productIndex].id),
+                onPressed: () {
+                  var prodId = product.id;
+                  model.selectProduct(prodId);
+                  Navigator.pushNamed<bool>(context, '/product/' + prodId)
+                      .then((_) => model.selectProduct(null));
+                },
               ),
               IconButton(
-                icon: Icon(model.productsList[productIndex].isFavorite
+                icon: Icon(product.isFavorite
                     ? Icons.favorite
                     : Icons.favorite_border),
                 color: Colors.red,
                 onPressed: () {
-                  model.selectProduct(model.productsList[productIndex].id);
+                  model.selectProduct(product.id);
                   model.toggleIsFavorite();
                 },
               ),
@@ -43,11 +46,14 @@ class ProductCard extends StatelessWidget {
     return Card(
       child: Column(
         children: <Widget>[
-          FadeInImage(
-            placeholder: AssetImage('assets/food.jpg'),
-            image: NetworkImage(product.image),
-            height: 300,
-            fit: BoxFit.cover,
+          Hero(
+            tag: product.id,
+            child: FadeInImage(
+              placeholder: AssetImage('assets/food.jpg'),
+              image: NetworkImage(product.image),
+              height: 300,
+              fit: BoxFit.cover,
+            ),
           ),
           Container(
               padding: EdgeInsets.only(top: 10.0),
@@ -62,7 +68,6 @@ class ProductCard extends StatelessWidget {
                 ],
               )),
           AddressTag(product.location.address),
-          Text(product.userEmail),
           _buildButtonBar(context)
         ],
       ),

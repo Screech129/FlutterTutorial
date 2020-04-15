@@ -32,9 +32,18 @@ dependencies:
   image_picker: ^0.6.4
   mime: ^0.9.6+3
   firebase_storage: ^3.1.5
+  url_launcher: ^5.4.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.7.4
+
+flutter_icons:
+  image_path: "assets/icon/app-icon.png"
+  android: true # can specify file name here e.g. "ic_launcher"
+  ios: true # can specify file name here e.g. "My-Launcher-Icon"
+  adaptive_icon_background: "#FFFAFAFA" # only available for Android 8.0 devices and above
+  adaptive_icon_foreground: "assets/icon/app-icon.png" # only available for Android 8.0 devices and above
 
 
 # For information on the generic Dart part of this file, see the

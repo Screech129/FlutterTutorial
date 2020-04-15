@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/models/auth.dart';
 import 'package:flutter_app/viewmodels/mainViewModel.dart';
+import 'package:flutter_app/widgets/ui_elements/adaptiveProgressIndicator.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 class AuthPage extends StatefulWidget {
@@ -10,12 +11,28 @@ class AuthPage extends StatefulWidget {
   }
 }
 
-class _AuthPageState extends State<AuthPage> {
+class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   final Map<String, dynamic> _formData = {
     'email': null,
     'password': null,
     'acceptTerms': false
   };
+
+  AnimationController _animationController;
+  Animation<Offset> _slideAnimation;
+  @override
+  void initState() {
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 200),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: Offset(0, -2), end: Offset.zero).animate(
+      CurvedAnimation(
+          parent: _animationController, curve: Curves.fastOutSlowIn),
+    );
+    super.initState();
+  }
 
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
   final TextEditingController _passwordTextController = TextEditingController();
@@ -59,19 +76,29 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   Widget _buildPasswordConfirmInput() {
-    return TextFormField(
-      decoration: InputDecoration(
-          labelText: 'Confirm Password',
-          filled: true,
-          fillColor: Colors.black54),
-      obscureText: true,
-      validator: (String value) {
-        if (_passwordTextController.text.trim() != value.trim()) {
-          return 'Passwords do not match.';
-        }
+    return FadeTransition(
+      opacity: CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeIn,
+      ),
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: TextFormField(
+          decoration: InputDecoration(
+              labelText: 'Confirm Password',
+              filled: true,
+              fillColor: Colors.black54),
+          obscureText: true,
+          validator: (String value) {
+            if (_passwordTextController.text.trim() != value.trim() &&
+                _authMode == AuthMode.Signup) {
+              return 'Passwords do not match.';
+            }
 
-        return null;
-      },
+            return null;
+          },
+        ),
+      ),
     );
   }
 
@@ -135,20 +162,24 @@ class _AuthPageState extends State<AuthPage> {
               SizedBox(
                 height: 10.0,
               ),
-              _authMode == AuthMode.Signup
-                  ? _buildPasswordConfirmInput()
-                  : Container(),
+              _buildPasswordConfirmInput(),
               _buildAcceptTermsTile(),
               SizedBox(
                 height: 10.0,
               ),
               FlatButton(
                 onPressed: () {
-                  setState(() {
-                    _authMode = _authMode == AuthMode.Login
-                        ? AuthMode.Signup
-                        : AuthMode.Login;
-                  });
+                  if (_authMode == AuthMode.Login) {
+                    setState(() {
+                      _authMode = AuthMode.Signup;
+                    });
+                    _animationController.forward();
+                  } else {
+                    setState(() {
+                      _authMode = AuthMode.Login;
+                    });
+                    _animationController.reverse();
+                  }
                 },
                 child: Text(
                     'Switch to ${_authMode == AuthMode.Login ? 'Signup' : 'Login'}'),
@@ -159,7 +190,7 @@ class _AuthPageState extends State<AuthPage> {
               ScopedModelDescendant<MainViewModel>(builder:
                   (BuildContext context, Widget child, MainViewModel model) {
                 return model.isLoading
-                    ? CircularProgressIndicator()
+                    ? AdaptiveProgressIndicator()
                     : RaisedButton(
                         textColor: Colors.white,
                         child: Text(

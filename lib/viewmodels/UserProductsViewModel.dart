@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_app/shared/global_config.dart';
 import 'package:path/path.dart' as path;
 
 import 'package:firebase_storage/firebase_storage.dart';
@@ -20,6 +21,7 @@ class UserProductsViewModel extends Model {
   String _selProductId;
   bool _isLoading = false;
   User _authenticatedUser;
+ 
 }
 
 class UserViewModel extends UserProductsViewModel {
@@ -45,11 +47,11 @@ class UserViewModel extends UserProductsViewModel {
     notifyListeners();
     authmode == AuthMode.Login
         ? response = await http.post(
-            'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyDnAdTHdPfyjXBldc0UKf7fGrPPWS2Zt3M',
+            'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${googleApiKey}',
             body: json.encode(authData),
           )
         : response = await http.post(
-            'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyDnAdTHdPfyjXBldc0UKf7fGrPPWS2Zt3M',
+            'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${googleApiKey}',
             body: json.encode(authData),
           );
     bool hasError = true;
@@ -117,7 +119,7 @@ class UserViewModel extends UserProductsViewModel {
     _authenticatedUser = null;
     _authTimer.cancel();
     _userSubject.add(false);
-
+    _selProductId = null;
     final SharedPreferences sharedPreferences =
         await SharedPreferences.getInstance();
     sharedPreferences.remove('token');
@@ -172,10 +174,10 @@ class ProductsViewModel extends UserProductsViewModel {
       name: 'storeImage',
       options: FirebaseOptions(
         googleAppID: (Platform.isIOS || Platform.isMacOS)
-            ? '1:680592336660:ios:ba47362c7de5475e1bc401'
-            : '1:680592336660:android:91a1bfaa9f9470b01bc401',
-        gcmSenderID: '680592336660',
-        apiKey: ' AIzaSyDnAdTHdPfyjXBldc0UKf7fGrPPWS2Zt3M ',
+            ? iosAppId
+            : androidAppId,
+        gcmSenderID: gcmId,
+        apiKey: googleApiKey,
         projectID: 'fluttertutorialds',
       ),
     );
@@ -266,7 +268,7 @@ class ProductsViewModel extends UserProductsViewModel {
     notifyListeners();
     return http
         .delete(
-            "https://fluttertutorialds.firebaseio.com/products/${deletedProductId}.json?auth=${_authenticatedUser.token}")
+            "https://fluttertutorialds.firebaseio.com/products/$deletedProductId.json?auth=${_authenticatedUser.token}")
         .then((http.Response response) {
       _isLoading = false;
       notifyListeners();
@@ -370,6 +372,7 @@ class ProductsViewModel extends UserProductsViewModel {
 
     _products[selectedProductIndex] = updatedProduct;
     notifyListeners();
+    _selProductId = null;
   }
 
   void toggleDisplayMode() {
@@ -377,8 +380,11 @@ class ProductsViewModel extends UserProductsViewModel {
     notifyListeners();
   }
 
-  Future<Null> fetchProducts({onlyForUser = false}) {
+  Future<Null> fetchProducts({onlyForUser = false, clearExisting = false}) {
     _isLoading = true;
+    if (clearExisting) {
+      _products = [];
+    }
     notifyListeners();
     print(_authenticatedUser.token);
     return http

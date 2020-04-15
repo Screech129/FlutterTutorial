@@ -1,9 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/models/locationData.dart';
 import 'package:flutter_app/models/product.dart';
 import 'package:flutter_app/viewmodels/mainViewModel.dart';
 import 'package:flutter_app/widgets/form_inputs/image.dart';
 import 'package:flutter_app/widgets/form_inputs/location_inputFlutterMap.dart';
+import 'package:flutter_app/widgets/ui_elements/adaptiveProgressIndicator.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'dart:io';
 
@@ -135,7 +137,9 @@ class _ProductEditPageState extends State<ProductEditPage> {
     return ScopedModelDescendant<MainViewModel>(
       builder: (BuildContext context, Widget child, MainViewModel model) {
         return model.isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? Center(
+                child: AdaptiveProgressIndicator(),
+              )
             : RaisedButton(
                 child: Text('Save'),
                 textColor: Colors.white,
